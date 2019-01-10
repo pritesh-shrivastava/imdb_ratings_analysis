@@ -1,0 +1,104 @@
+---
+title: "IMDb Analysis"
+author: "Pritesh Shrivastava"
+date: "12/24/2018"
+output: html_document
+---
+
+We will try to compare the movies of the 3 Khans of Bollywood using the IMDb ratings of their movies as the deciding factor.
+IMDb releases it's data publicly in a standard TSV format [here](https://datasets.imdbws.com/). And as expected, these datasets are going to be fairly big in size. 
+
+```{r message=FALSE}
+library(tidyverse)
+library(magrittr)
+```
+
+## Load list of movies
+```{r}
+movies <- read_csv("movies.csv")
+head(movies)
+```
+
+## Load movie details
+```{r}
+movie_details <- read_tsv("title.basics.tsv")
+head(movie_details)
+```
+
+
+## Load title rating
+```{r}
+ratings <- read_tsv("title.ratings.tsv")
+head(ratings)
+```
+
+## Join the Khan movies with the ratings and the movie details datasets
+```{r}
+df <- movies %>%
+  left_join(ratings) %>%
+  left_join(movie_details)
+
+summary(df)
+```
+
+### We do not have ratings data for 155 of these movies. Let's filter them out and check the distribution of these movies by actor. Let's also remove irrelevant columns
+```{r}
+df_clean <- df %>%
+  filter(! is.na(averageRating)) %>%
+  select(-ordering, -job, -birthYear, -deathYear, -primaryProfession, -knownForTitles, -endYear)
+
+head(df_clean)
+```
+
+## Let's check the category field to see if there are movies where the actors did anything other than acting 
+```{r}
+df_clean %>% group_by(primaryName, category) %>% summarise(count = n())
+```
+
+While these 3 have produced very few films so far, the category of self seems to be TV shows, documentaries or other events featuring these celebrites as themselves. 
+```{r}
+df_clean %>%
+  filter(category == "self") %>%
+  select(titleType, primaryName, primaryTitle, genres)
+```
+
+## We can ignore these from the analysis too.
+```{r}
+df_clean %<>%
+  filter(! category == "self")
+
+glimpse(df_clean)
+```
+
+## Let's check the distribution again
+```{r}
+df_clean %>%
+  group_by(primaryName) %>%
+  filter(startYear > 2000) %>%
+  filter(titleType == "movie") %>%
+  summarise(count = n(), 
+            meanRating = round(mean(averageRating),1),
+            std_dev = round(sd(averageRating),1)) %>%
+  ggplot(aes(x = reorder(primaryName, std_dev), y = std_dev, label = meanRating)) +
+  geom_col() +
+  geom_text(nudge_y = 1) +
+  coord_flip() + 
+  ylim(0,10) +
+    theme_bw()
+```
+
+## Let's plot ratings by year 
+```{r}
+df_clean %>%
+  ggplot() +
+  geom_line(mapping = aes(x = startYear, y = averageRating, colour = as.factor(primaryName)))
+```
+
+## Let's do a histogram
+```{r}
+df_clean %>%
+  filter(primaryName %in% c("Aamir Khan", "Shah Rukh Khan", "Leonardo DiCaprio")) %>%
+  ggplot(aes(x = averageRating, fill = as.factor(primaryName))) +
+  geom_histogram(alpha = 0.6, position = "identity")
+```
+

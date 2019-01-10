@@ -1,0 +1,38 @@
+---
+title: "IMDb Analysis"
+author: "Pritesh Shrivastava"
+date: "12/24/2018"
+output: html_document
+---
+
+
+```{r message=FALSE}
+library(tidyverse)
+library(magrittr)
+```
+
+## Get Actor IDs
+```{r}
+actors <- read_csv("name_id.csv")
+head(actors)
+```
+
+## R Markdown
+```{r}
+cast <- read_tsv("title.principals.tsv")
+head(cast)
+```
+
+## Get the relevant list of movies by matching the actors' unique IDs
+```{r}
+movies <- cast %>%
+  inner_join(actors)
+
+head(movies)
+```
+
+## Write out to CSV
+```{r}
+write_csv(movies, "movies.csv")
+```
+

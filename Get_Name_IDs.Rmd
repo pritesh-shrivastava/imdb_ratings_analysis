@@ -1,0 +1,30 @@
+---
+title: "IMDb Analysis"
+author: "Pritesh Shrivastava"
+date: "12/24/2018"
+output: html_document
+---
+
+
+```{r}
+library(tidyverse)
+library(magrittr)
+```
+
+## R Markdown
+```{r}
+names <- read_tsv("name.basics.tsv")
+head(names)
+```
+
+## Find the unique ID of these actors
+```{r}
+actors <- names %>%
+  filter(primaryName %in% c("Shah Rukh Khan", "Aamir Khan", "Salman Khan", "Tom Hanks", "Leonardo DiCaprio", "Amitabh Bachchan", "Johnny Depp", "Rajinikanth", "Akshay Kumar", "Ajay Devgn")) %>%
+  head(10) %>%
+  write_csv("name_id.csv")
+
+actors
+```
+
+So I never knew all 3 Khans were born in the same year !!
